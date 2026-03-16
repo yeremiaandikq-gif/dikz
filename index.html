@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dikz-Ai — Asisten Cerdas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:#080810;--surface:#10101a;--panel:#14141f;--border:#252535;
+      --accent:#7c3aed;--accent2:#a78bfa;--accent3:#38bdf8;
+      --glow:rgba(124,58,237,0.3);--text:#ede9fe;--muted:#6b6b8a;
+      --user-bg:#1a1030;--bot-bg:#0f0f1e;--radius:16px;
+      --font:'Syne',sans-serif;--mono:'Space Mono',monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);height:100dvh;display:flex;flex-direction:column;overflow:hidden;}
+    body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");}
+    .blob{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0;}
+    .b1{width:500px;height:500px;background:rgba(124,58,237,.12);top:-150px;right:-100px;animation:drift 12s ease-in-out infinite alternate;}
+    .b2{width:350px;height:350px;background:rgba(56,189,248,.08);bottom:-80px;left:-80px;animation:drift 16s ease-in-out infinite alternate-reverse;}
+    .b3{width:200px;height:200px;background:rgba(167,139,250,.1);top:45%;left:35%;animation:drift 9s ease-in-out infinite alternate;}
+    @keyframes drift{from{transform:translate(0,0)}to{transform:translate(20px,20px)}}
+
+    header{position:relative;z-index:10;display:flex;align-items:center;gap:14px;padding:14px 22px;border-bottom:1px solid var(--border);background:rgba(8,8,16,.88);backdrop-filter:blur(18px);}
+    .logo{width:44px;height:44px;border-radius:14px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent3));display:grid;place-items:center;box-shadow:0 0 22px var(--glow);animation:lp 3s ease-in-out infinite;}
+    @keyframes lp{0%,100%{box-shadow:0 0 22px var(--glow)}50%{box-shadow:0 0 40px rgba(124,58,237,.55)}}
+    .logo svg{width:24px;height:24px;fill:#fff;}
+    .header-info{flex:1;}
+    .brand{font-size:1.18rem;font-weight:800;background:linear-gradient(90deg,#fff 20%,var(--accent2) 60%,var(--accent3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .status{font-family:var(--mono);font-size:.7rem;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:2px;}
+    .dot{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:blink 2.4s ease-in-out infinite;}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+    .badge{font-family:var(--mono);font-size:.66rem;padding:4px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted);background:rgba(255,255,255,.02);}
+
+    #chat{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 16px;position:relative;z-index:1;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+    #chat::-webkit-scrollbar{width:3px;}
+    #chat::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+    .wrap{max-width:740px;margin:0 auto;display:flex;flex-direction:column;gap:22px;}
+
+    #welcome{text-align:center;padding:56px 20px 36px;animation:fadeUp .7s ease both;}
+    .wi{width:76px;height:76px;border-radius:24px;margin:0 auto 20px;background:linear-gradient(135deg,var(--accent),var(--accent3));display:grid;place-items:center;box-shadow:0 0 50px var(--glow);}
+    .wi svg{width:40px;height:40px;fill:#fff;}
+    #welcome h1{font-size:2rem;font-weight:800;margin-bottom:12px;background:linear-gradient(90deg,#fff 30%,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    #welcome p{color:var(--muted);font-size:.93rem;max-width:400px;margin:0 auto 28px;line-height:1.7;}
+    .suggestions{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;}
+    .sug{font-family:var(--font);font-size:.8rem;padding:8px 15px;border-radius:20px;cursor:pointer;background:var(--panel);border:1px solid var(--border);color:var(--muted);transition:all .2s;}
+    .sug:hover{border-color:var(--accent);color:var(--accent2);background:rgba(124,58,237,.1);}
+
+    .msg{display:flex;gap:12px;animation:fadeUp .3s ease both;}
+    .msg.user{flex-direction:row-reverse;}
+    .av{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-size:.85rem;overflow:hidden;}
+    .av.bot{background:linear-gradient(135deg,var(--accent),var(--accent3));box-shadow:0 0 14px var(--glow);padding:0;}
+    .av.bot img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;}
+    .av.user{background:linear-gradient(135deg,#38bdf8,#818cf8);}
+    .bubble{max-width:74%;padding:13px 16px;border-radius:var(--radius);font-size:.91rem;line-height:1.7;}
+    .msg.bot .bubble{background:var(--bot-bg);border:1px solid var(--border);border-top-left-radius:4px;}
+    .msg.user .bubble{background:var(--user-bg);border:1px solid rgba(124,58,237,.3);border-top-right-radius:4px;color:#ddd6fe;}
+    .meta{font-size:.67rem;font-family:var(--mono);color:var(--muted);margin-top:7px;}
+    .msg.user .meta{text-align:right;}
+
+    .bubble p{margin-bottom:8px;}.bubble p:last-child{margin-bottom:0;}
+    .bubble strong{color:var(--accent2);}
+    .bubble em{color:#c4b5fd;}
+    .bubble code{font-family:var(--mono);font-size:.82em;color:var(--accent2);background:rgba(124,58,237,.12);padding:1px 5px;border-radius:4px;}
+    .bubble pre{background:#0a0a18;border:1px solid var(--border);border-radius:10px;padding:14px;overflow-x:auto;margin:10px 0;}
+    .bubble pre code{background:none;padding:0;color:#a5f3fc;font-size:.82rem;line-height:1.6;}
+    .bubble ul,.bubble ol{padding-left:20px;margin:6px 0;}.bubble li{margin-bottom:4px;}
+    .bubble h2,.bubble h3{color:var(--accent2);margin:10px 0 6px;}
+    .bubble blockquote{border-left:3px solid var(--accent);padding-left:12px;color:var(--muted);margin:8px 0;}
+    .bubble a{color:var(--accent3);text-decoration:underline;}
+
+    .typing-dots{display:flex;gap:5px;align-items:center;height:22px;}
+    .typing-dots span{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:bounce 1.3s ease-in-out infinite;}
+    .typing-dots span:nth-child(2){animation-delay:.18s;}.typing-dots span:nth-child(3){animation-delay:.36s;}
+    @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-9px)}}
+
+    .err{display:flex;align-items:flex-start;gap:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:10px;padding:11px 14px;font-size:.85rem;color:#fca5a5;}
+
+    .input-area{position:relative;z-index:10;background:rgba(8,8,16,.92);backdrop-filter:blur(18px);border-top:1px solid var(--border);padding:14px 16px;}
+    .iw{max-width:740px;margin:0 auto;display:flex;gap:10px;align-items:flex-end;}
+    #inp{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:13px 16px;color:var(--text);font-family:var(--font);font-size:.91rem;resize:none;outline:none;max-height:140px;min-height:50px;transition:border-color .2s,box-shadow .2s;line-height:1.5;}
+    #inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,58,237,.2);}
+    #inp::placeholder{color:var(--muted);}
+    #btn{width:50px;height:50px;border-radius:14px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),#9d5cff);border:none;cursor:pointer;display:grid;place-items:center;transition:transform .15s,box-shadow .15s,opacity .2s;box-shadow:0 4px 18px var(--glow);}
+    #btn:hover:not(:disabled){transform:scale(1.07);box-shadow:0 6px 26px var(--glow);}
+    #btn:active:not(:disabled){transform:scale(.94);}
+    #btn:disabled{opacity:.35;cursor:default;}
+    #btn svg{width:22px;height:22px;fill:#fff;}
+    .foot{max-width:740px;margin:7px auto 0;font-size:.67rem;font-family:var(--mono);color:var(--muted);text-align:center;opacity:.55;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    @media(max-width:480px){.bubble{max-width:90%;}#welcome h1{font-size:1.55rem;}}
+  </style>
+</head>
+<body>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+
+<header>
+  <div class="logo" style="padding:0;overflow:hidden;">
+    <img src="https://cdn.aceimg.com/27b216d7f.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:14px;display:block;" alt="Dikz-Ai"/>
+  </div>
+  <div class="header-info">
+    <div class="brand">Dikz-Ai</div>
+    <div class="status"><span class="dot"></span>Online &amp; siap membantu</div>
+  </div>
+  <div class="badge">AI · v1.0</div>
+</header>
+
+<div id="chat">
+  <div class="wrap" id="msgs">
+    <div id="welcome">
+      <div class="wi" style="padding:0;overflow:hidden;">
+        <img src="https://cdn.aceimg.com/27b216d7f.jpg" style="width:100%;height:100%;object-fit:cover;border-radius:24px;display:block;" alt="Dikz-Ai"/>
+      </div>
+      <h1>Hai, Saya Dikz-Ai 👋</h1>
+      <p>Asisten AI cerdas yang siap membantu kamu kapan saja. Tanya apa saja — dari pengetahuan umum, coding, hingga kreasi konten!</p>
+      <div class="suggestions">
+        <button class="sug" onclick="useSug(this)">💡 Jelaskan cara kerja AI</button>
+        <button class="sug" onclick="useSug(this)">💻 Buatkan kode Python sederhana</button>
+        <button class="sug" onclick="useSug(this)">✍️ Buat caption Instagram menarik</button>
+        <button class="sug" onclick="useSug(this)">🌍 Terjemahkan ke bahasa Inggris</button>
+        <button class="sug" onclick="useSug(this)">📚 Rekomendasikan buku bagus</button>
+        <button class="sug" onclick="useSug(this)">🎯 Tips produktivitas harian</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="input-area">
+  <div class="iw">
+    <textarea id="inp" rows="1" placeholder="Ketik pesan ke Dikz-Ai…" autocomplete="off"></textarea>
+    <button id="btn" onclick="send()" title="Kirim">
+      <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+    </button>
+  </div>
+  <div class="foot">Dikz-Ai dapat membuat kesalahan · Selalu verifikasi informasi penting</div>
+</div>
+
+<script>
+  const inp  = document.getElementById('inp');
+  const btn  = document.getElementById('btn');
+  const msgs = document.getElementById('msgs');
+  const welc = document.getElementById('welcome');
+  let busy = false;
+  let history = [];
+
+  inp.addEventListener('input', () => {
+    inp.style.height = 'auto';
+    inp.style.height = Math.min(inp.scrollHeight, 140) + 'px';
+  });
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+
+  function useSug(b) {
+    inp.value = b.textContent.replace(/^[^\s]+\s/, '').trim();
+    inp.dispatchEvent(new Event('input'));
+    send();
+  }
+
+  function now() {
+    return new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+  }
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function md(t) {
+    t = t.replace(/```(\w*)\n?([\s\S]*?)```/g, (_,l,c) =>
+      `<pre><code>${esc(c.trim())}</code></pre>`);
+    t = t.replace(/`([^`\n]+)`/g,'<code>$1</code>');
+    t = t.replace(/^### (.+)$/gm,'<h3>$1</h3>');
+    t = t.replace(/^## (.+)$/gm,'<h2>$1</h2>');
+    t = t.replace(/^# (.+)$/gm,'<h2>$1</h2>');
+    t = t.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+    t = t.replace(/\*(.+?)\*/g,'<em>$1</em>');
+    t = t.replace(/^> (.+)$/gm,'<blockquote>$1</blockquote>');
+    t = t.replace(/^[\-\*\+] (.+)$/gm,'<li>$1</li>');
+    t = t.replace(/(<li>[\s\S]*?<\/li>)+/g,s=>`<ul>${s}</ul>`);
+    t = t.replace(/\[([^\]]+)\]\(([^)]+)\)/g,'<a href="$2" target="_blank">$1</a>');
+    t = t.split(/\n{2,}/).map(p => {
+      p = p.trim(); if(!p)return'';
+      if(/^<(h[1-6]|ul|ol|pre|blockquote)/.test(p))return p;
+      return `<p>${p.replace(/\n/g,'<br/>')}</p>`;
+    }).join('');
+    return t;
+  }
+
+  const BOT_AVATAR = `<div class="av bot"><img src="https://cdn.aceimg.com/27b216d7f.jpg" alt="Dikz-Ai"/></div>`;
+  const USER_AVATAR = `<div class="av user">😊</div>`;
+
+  function addMsg(role, content, raw=false) {
+    const d = document.createElement('div');
+    d.className = `msg ${role}`;
+    const av = role==='bot' ? BOT_AVATAR : USER_AVATAR;
+    d.innerHTML = `
+      ${av}
+      <div class="bubble">
+        <div class="content">${raw ? content : md(content)}</div>
+        <div class="meta">${now()}</div>
+      </div>`;
+    msgs.appendChild(d);
+    scrollDown();
+    return d;
+  }
+
+  function showTyping() {
+    const d = document.createElement('div');
+    d.id='typing'; d.className='msg bot';
+    d.innerHTML=`${BOT_AVATAR}<div class="bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+    msgs.appendChild(d); scrollDown();
+  }
+  function removeTyping() { document.getElementById('typing')?.remove(); }
+  function scrollDown() { document.getElementById('chat').scrollTop=99999; }
+
+  async function send() {
+    const text = inp.value.trim();
+    if (!text || busy) return;
+    welc && (welc.style.display='none');
+    inp.value=''; inp.style.height='auto';
+    addMsg('user', esc(text), true);
+    busy=true; btn.disabled=true;
+    showTyping();
+
+    try {
+      const res = await fetch(`/api/chat?q=${encodeURIComponent(text)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      const reply =
+        data?.result ?? data?.response ?? data?.answer ??
+        data?.text   ?? data?.message  ?? data?.content ??
+        (typeof data === 'string' ? data : null);
+
+      if (!reply) throw new Error('Respons kosong dari server.');
+      removeTyping();
+      addMsg('bot', reply);
+    } catch(e) {
+      removeTyping();
+      const d = document.createElement('div');
+      d.className='msg bot';
+      d.innerHTML=`${BOT_AVATAR}<div class="bubble"><div class="err">⚠️ <span><strong>Gagal:</strong> ${esc(e.message)}</span></div><div class="meta">${now()}</div></div>`;
+      msgs.appendChild(d); scrollDown();
+    } finally {
+      busy=false; btn.disabled=false; inp.focus();
+    }
+  }
+</script>
+</body>
+</html>
