@@ -1,8 +1,0 @@
-{
-  "name": "dikz-ai",
-  "version": "1.0.0",
-  "description": "Dikz-Ai Chatbot",
-  "engines": {
-    "node": "18.x"
-  }
-}
